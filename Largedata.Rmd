@@ -1,0 +1,142 @@
+---
+title: "Dataset Exploration"
+Author: 'By Akhila Kvns'
+Date: "08 February, 2017"
+output: html_document
+---
+## Setting path
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(reshape2)
+```
+
+```{r}
+setwd("C:/Users/Innova/Downloads/data")
+getwd()
+```
+
+```{r}
+files <- list.files(pattern = "*.csv")
+```
+
+** In the above process, we have set the path to the folder containing all the data files.
+
+## Combining Files
+
+```{r}
+
+my_filter = function(x){
+  tmp_data <- read.csv(x, header=T, stringsAsFactors = TRUE,na.strings = c("NA","#DIV/0!",""))[,-3]
+  filter(tmp_data,Country.or.Area %in% c("Argentina", "Algeria","Australia", "Angola", "Brazil", "Canada", "China", "France", "Germany", "India", "Indonesia", "Italy",
+                                         "Japan", "Mexico", "Russian Federation", "Saudi Arabia", "South Africa", "United Kingdom",
+                                         "Zimbabwe"))
+} 
+
+myfiles_test_full = do.call(rbind, lapply(files, my_filter))
+```
+
+```{r}
+head(myfiles_test_full)
+
+```
+
+** We filtered the dataset by choosing some countries and combined all the data related to that specific countries.
+
+## Plotting
+```{r}
+library(ggplot2)
+
+qplot(Commodity, Country.or.Area, data=myfiles_test_full, shape = Flow)
+
+```
+
+** The above plot, shows the flow of the commodities for every country by distinct values.
+
+## Bar Plot
+
+```{r}
+barplot1 <- table(myfiles_test_full$Country.or.Area, myfiles_test_full$Flow)
+barplot(barplot1, main="Country vs Flow",
+        xlab="Flow", col=c("darkblue","red", "yellow", "green", "black", "pink", "blue", "grey","violet", "brown", "orange", "purple"),
+        legend = rownames(barplot1))
+
+```
+
+
+** The above bar chart, gives us the amount of flow done by each country.
+
+** Out of the export, import, reimport and re export, the ratio of import is larger.
+
+** We have, Venezuela as the highest exporter as well as the importer.
+
+
+
+## Filtering the data
+
+```{r}
+
+
+
+str(myfiles_test_full)
+clean_data <- data.frame(country = as.factor(myfiles_test_full$Country.or.Area),trade=myfiles_test_full$Trade..USD., year = as.factor(myfiles_test_full$Year),flow=as.factor(myfiles_test_full$Flow), Commodity = as.factor(myfiles_test_full$Commodity), weight = as.factor(myfiles_test_full$Weight..kg.))
+
+pie_trade_country <- data.frame(country = character(), trade = integer())
+levels(clean_data$country)
+
+for(filter_country in levels(clean_data$country)){
+  filter_list = clean_data[clean_data$country == filter_country,]
+  trade_amount = sum(filter_list$trade)
+  pie_trade_country = rbind(pie_trade_country,data.frame(country=c(filter_country),trade=c(trade_amount)))
+}
+```
+
+
+** In the above, we have filtered the data by taking the necessay columns and also we have added the trade by each country into a single value.
+
+## Pie Chart
+
+```{r}
+pie(pie_trade_country$trade, pie_trade_country$country, main= "trade vs Country")
+```
+
+
+** From the above pie chart, We can conclude that Germany and China are the leading countries based upon the trade usd.
+
+
+## Stacked Area Chart
+
+```{r}
+library(ggplot2)
+ggplot(clean_data, aes(x=year, y=trade, group=country, fill=country))+geom_area(position = "stack")
+
+```
+
+
+** The above stacked area chart, shows the increase in the trade of the countries year by year.
+
+
+** China, Canada, France and Germany has the major trade from the year 1994 when compared to other countries.
+
+## Stacked Bar Chart
+
+```{r}
+library(ggplot2)
+library(reshape2)
+
+ggplot(clean_data, aes(x= country, y=trade, fill=flow))+ geom_bar(stat = "identity", position="dodge")+scale_fill_brewer(palette = "Set1")
+
+```
+
+** The above stacked bar chart, shows the flow of the countries depending upon trade.
+
+** China is the leading trador of export, import and also re import.
+
+** Zimbabwe stands last in the trade of both export and import.
+
+** The countries Angola, Algeria, Argentina, Brazil, Germany, India ,Indonesia, Japan, Mexico, Russian Federation,South Africa and Zimbabwe do not have any Trades of Re-export and Re-import
